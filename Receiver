@@ -1,1 +1,83 @@
+`timescale 1ns / 1ps
+
+module Uart_RX(
+						data_out,
+						par_bit_err,
+						stop_bit_err,
+						RX_in,
+						clk,
+						rst
+						);
+						
+	input RX_in;
+	input clk;
+	input rst;
+	
+	output [7:0] data_out;
+	output par_bit_err;
+	output stop_bit_err;
+	
+	wire [7:0] w_sipo;
+	wire w_shift;
+	wire [7:0] w_par_data_out;
+	wire w_par_load;
+	wire w_check_stop;
+	wire w_clk;
+	
+	wire start_bit_detected;
+	
+	Seq_Detector_0000_0000 start_bit_check(
+														.d_out(start_bit_detected),
+														.d_in(RX_in),
+														.clk(clk),
+														.rst(rst)
+														);
+	
+	DiivideBy_16_Counter pulse_gen(
+									.clk_out(w_clk),
+									.clk(clk),
+									.rst(rst)
+									);
+	
+	
+	SIPO RSR(
+				.data_out(w_sipo),
+				.data_in(RX_in),
+				.shift(w_shift),
+				.clk(w_clk),
+				.rst(rst)
+				);
+	
+	Parity_check Par_check(	
+									.data_out(w_par_data_out),
+									//.par_out(w_par_out),
+									.par_error(par_bit_err),
+									.RX_in(RX_in),
+									.data_in(w_sipo),
+									.par_load(w_par_load),
+									.clk(w_clk),
+									.rst(rst)
+									);
+	
+	Stop_bit_check	stop_check(
+										.data_out(data_out),
+										.stop_bit_error(stop_bit_err),
+										.RX_in(RX_in),
+										.data_in(w_par_data_out),
+										.check_stop(w_check_stop),
+										.clk(w_clk),
+										.rst(rst)
+										);
+
+	FSM_RX	Control_Path(
+									.shift(w_shift),
+									.par_load(w_par_load),
+									.check_stop(w_check_stop),
+									.start_bit(start_bit_detected),
+									.par_error(par_bit_err),
+									.clk(w_clk),
+									.rst(rst)
+									);
+
+endmodule
 
