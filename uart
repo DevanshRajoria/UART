@@ -1,0 +1,51 @@
+`timescale 1ns / 1ps
+
+module UART(
+					data_out,
+					uart_tx,
+					data_in,
+					par_bit_err,
+					stop_bit_err,
+					B_sel,
+					clk,
+					rst
+					);
+	
+ 	input [7:0] data_in; 
+	input uart_tx;
+	input B_sel;
+	input clk;
+	input rst;
+	
+	output [7:0] data_out;	
+	output par_bit_err;
+	output stop_bit_err;
+	
+	wire w_rx;
+	wire w_clk;
+	
+	Baud_Rate_Select baud_rate_gen(
+											.B_clk(w_clk),
+											.B_sel(B_sel),
+											.clk(clk),
+											.rst(rst)
+											);
+	
+	UART_TX TX(
+					.DATA_OUT(w_rx),
+					.Uart_TX(uart_tx),
+					.data_in(data_in),
+					.clk(w_clk),
+					.rst(rst)
+					);
+
+	Uart_RX RX(
+					.data_out(data_out),
+					.par_bit_err(par_bit_err),
+					.stop_bit_err(stop_bit_err),
+					.RX_in(w_rx),
+					.clk(w_clk),
+					.rst(rst)
+					);
+
+endmodule
