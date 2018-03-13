@@ -1,1 +1,67 @@
+`timescale 1ns / 1ps
+
+module Baud_Rate_Select(
+								B_clk,
+								B_sel,
+								clk,
+								rst
+								);
+	input B_sel;
+	input clk;
+	input rst;
+	
+	output [10:0] B_clk;
+	
+	wire [1:0] w_sel;
+	
+	Count count_baud(.count(w_sel),.button(B_sel),.clk(clk),.rst(rst));
+	FourCrossOne_Mux baud_sel(.data_out(B_clk),.sel(w_sel));
+	Baud_Rate_Generator pulse_gen(.clk_out(),.clk(clk),.rst(rst));
+	
+endmodule
+
+module Count(count,button,clk,rst);
+	parameter count_size = 2;
+	parameter No_of_baud = 4;
+	
+	input button;
+	input clk;
+	input rst;
+	output reg [count_size-1:0] count;
+	
+	always @(posedge clk,negedge rst)begin
+		if(!rst)begin
+			count <= 0;
+		end
+		else begin
+			if(button)begin
+				if(count == No_of_baud - 1)begin
+					count <= 0;
+				end
+				else begin
+					count <= count + 1;
+				end
+			end
+		end
+	end
+	
+endmodule
+
+module FourCrossOne_Mux(baud_out,sel);
+	parameter max_data_bit = 11;
+	
+	input [1:0] sel;
+	
+	output reg [max_data_bit-1:0] baud_out;
+	
+	always @(*)begin
+		case(sel)
+			2'b00:	baud_out = 1302;		// 2400
+			2'b01:	baud_out = 325;		// 9600
+			2'b10:	baud_out = 162;		// 19200		
+			2'b11:	baud_out = 81;			// 38400
+		endcase
+	end
+
+endmodule
 
