@@ -1,1 +1,64 @@
 
+`timescale 1ns / 1ps
+
+module UART_TX(
+						DATA_OUT,
+						Uart_TX,
+						data_in,
+						clk,
+						rst
+						);	
+	
+	input Uart_TX;
+	input [7:0]data_in;
+	input clk;
+	input rst;
+	output DATA_OUT;
+	
+	wire w_load;
+	wire w_shift;
+	wire w_par;
+	wire [1:0] w_sel;
+	wire w_piso;
+	wire w_clk;
+	
+	DiivideBy_16_Counter d1(
+									.clk_out(w_clk),
+									.clk(clk),
+									.rst(rst)
+									);
+	
+	PISO TSR(.data_out(	
+								w_piso),
+								.data_in(data_in),
+								.load(w_load),
+								.shift(w_shift),
+								.clk(w_clk),
+								.rst(rst)
+								);
+	
+	Parity_Checker Parity_gen(
+										.par_out(w_par),
+										.data_in(data_in),
+										.par_load(w_load),
+										.clk(w_clk),
+										.rst(rst)
+										);
+	
+	FourXOne_MUX Select_MUX(
+										.par_bit(w_par),
+										.data_bit(w_piso),
+										.Y(DATA_OUT),
+										.sel(w_sel)
+										);
+
+	FSM_TX Control_Path(
+								.load(w_load),
+								.select(w_sel),
+								.shift(w_shift),
+								.Uart_TX(Uart_TX),
+								.clk(w_clk),
+								.rst(rst)
+								);
+	
+endmodule
